@@ -8,7 +8,6 @@ library(vars)
 library(urca)
 library(fUnitRoots)
 library(portes)
-library(fUnitRoots)
 library(pdfetch)
 library(rwebstat)
 library(dplyr)
@@ -28,27 +27,40 @@ library(mFilter)
 
 
 ### Data presentation: source and plots for each time series
-read.csv2("RAW/GDP.csv")
-read.csv2("RAW/LRUN64TTUSQ156S.csv")
+GDP <- read.csv2("RAW/GDP.csv", sep = ",") %>%
+urate <- read.csv2("RAW/LRUN64TTUSQ156S.csv", sep = ",")
+
+# change the date format
+GDP$DATE <- as.Date(GDP$DATE, format = "%Y-%m-%d")
+urate$DATE <- as.Date(urate$DATE, format = "%Y-%m-%d")
+
+# separate month and year
+GDP$YEAR <- format(GDP$DATE, "%Y")
+GDP$MONTH <- format(GDP$DATE, "%m")
+urate$YEAR <- format(urate$DATE, "%Y")
+urate$MONTH <- format(urate$DATE, "%m")
+
+# combine year and month in the correct way for the following plots
+GDP$DATE <- as.numeric(paste0(GDP$YEAR, ".", GDP$MONTH))
+urate$DATE <- as.numeric(paste0(urate$YEAR, ".", urate$MONTH))
+
+# transform the measure of interest in the correct format
+GDP$GDP <- as.numeric(GDP$GDP)
+urate$LRUN64TTUSQ156S <- as.numeric(urate$LRUN64TTUSQ156S)
+
 
 # first plot (Raw plot). What do you see ? 
-plot(qfr, type="s", col=c("red","green","black"), lwd=2, lty=1:3) + legend(x=1950, y=500, legend=c("Import","Export","GDP"),col=c("red","green","black"), lwd=2, lty=1:3)
-#ou bien 
-qfr_df = cbind(time(qfr), qfr) # you have to put time as a column
-    colnames(qfr_df) = c("Time", colnames(qfr))
-    qfr_df = as.data.frame(qfr_df) # you have to put your data in a dataframe
-    baseplot = ggplot(qfr_df) + theme_bw() + 
-      geom_line(aes(x=Time, y=gdp)) + 
-      ggtitle("French real GDP") + ylab("")
-    baseplot
-baseplot + theme_wsj()
-baseplot + theme_economist()
+
+GDP_1 <- ggplot(GDP, aes(x = DATE, y = GDP)) +
+  geom_line() +
+  labs(title = "GDP plot", x = "Date", y = "GDP")
+
+ggsave("RAW/GDP_1.png", plot = GDP_1, width = 8, height = 6)
 #ou bien
-highchart(type = "stock") %>%
-      hc_add_series(qfr[,"import"]/qfr[,"gdp"], name="Share of Imports") %>%
-      hc_add_series(qfr[,"export"]/qfr[,"gdp"], name="Share of Exports") %>%
+GDP_1 <- highchart(type = "stock") %>%
+      hc_add_series(GDP[,"GDP"], name="Value of GDP") %>%
       hc_title(
-        text = "France in globalisation",
+        text = "US GDP",
         margin = 20,
         align = "left",
         style = list(color = "#22A884", useHTML = TRUE)  ) %>%
@@ -57,19 +69,11 @@ highchart(type = "stock") %>%
         verticalAlign = "bottom",
         selected = 4) %>%
       hc_legend(enabled = TRUE)
-#ou bien
-    highchart(type = "stock") %>%
-      hc_add_series((qfr[,"export"]-qfr[,"import"])/qfr[,"gdp"], name="Pct of GdP") %>%
-      hc_title(
-        text = "France balance of trade",
-        margin = 20,
-        align = "left",
-        style = list(color = "#22A884", useHTML = TRUE)  ) %>%
-      hc_rangeSelector(enabled = FALSE) %>%
-      hc_rangeSelector(
-        verticalAlign = "bottom",
-        selected = 4) %>%
-      hc_legend(enabled = TRUE)
+
+export_hc(GDP_1, filename = "RAW/GDP_1.png", type = "image/png")
+
+
+################################################################# NOT DONE FROM NOW
 # linear trend
 time = 1:nrow(lqfr)
 reg_lin = lm(lgdp ~ time)
@@ -210,25 +214,4 @@ lines(gr_gdp, col="black")
 legend(x=1990, y=0.06, legend=c("QoQ rate","OOS Forecast AR(3)","OOS Forecast MA(3)","OOS Forecast ARMA(3,3)"),
        col=c("black","red","blue","green"), lwd=2)
 
-
-
-
-
-
-
-###############################
-#### Multivariate Analysis ####
-###############################
-
-
-### Selection of the lag order of the multivariate model
-
-### Estimation of the multivariate model, and quality checks of the estimation
-
-### Granger non-causality tests
-
-### Forecasts: in-sample and out-of-sample, for all variables
-
-### Orthogonalized impulse response functions, for all variables (use Cholesky method, and explain how you interpret the ordering 
-### of the variables)
 
