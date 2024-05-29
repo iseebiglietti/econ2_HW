@@ -150,7 +150,7 @@ ggsave("RAW/ddrate.png", plot = ddrate, width = 8, height = 6)
 
 
 
-
+# we take urate, lgdp and dlgdp ! :) #
 
 
 
