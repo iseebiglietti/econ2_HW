@@ -18,15 +18,19 @@ library(gap)
 library(mFilter)
 
 #############################
-#### Univariate Analysis ####
+#############################
+#### UNIVARIATE ANALYSIS ####
+#############################
 #############################
 
 
 
 
 
+##########################################################
+#Data presentation: source and plots for each time series#
+##########################################################
 
-### Data presentation: source and plots for each time series
 GDP <- read.csv2("RAW/GDP.csv", sep = ",") %>%
 urate <- read.csv2("RAW/LRUN64TTUSQ156S.csv", sep = ",")
 
@@ -47,13 +51,16 @@ urate$DATE <- as.numeric(paste0(urate$YEAR, ".", urate$MONTH))
 # transform the measure of interest in the correct format
 GDP$GDP <- as.numeric(GDP$GDP)
 urate$LRUN64TTUSQ156S <- as.numeric(urate$LRUN64TTUSQ156S)
+urate <- urate %>%
+  rename(rate = LRUN64TTUSQ156S)
 
 
-# first plot (Raw plot). What do you see ? 
+
+###### First plot (Raw plot). What do you see ? 
 
 GDP_1 <- ggplot(GDP, aes(x = DATE, y = GDP)) +
   geom_line() +
-  labs(title = "GDP plot", x = "Date", y = "GDP")
+  labs(title = "GDP evolution", x = "Date", y = "GDP")
 
 ggsave("RAW/GDP_1.png", plot = GDP_1, width = 8, height = 6)
 #ou bien
@@ -72,30 +79,87 @@ GDP_1 <- highchart(type = "stock") %>%
 
 export_hc(GDP_1, filename = "RAW/GDP_1.png", type = "image/png")
 
+urate_1 <- ggplot(urate, aes(x = DATE, y = rate)) +
+  geom_line() +
+  labs(title = "Unemployment evolution", x = "Date", y = "Unemployment rate")
 
-################################################################# NOT DONE FROM NOW
-# linear trend
-time = 1:nrow(lqfr)
-reg_lin = lm(lgdp ~ time)
-summary(reg_lin)
-str(reg_lin)
-# quadratic trend
-time2 = time^2
-reg_quad = lm(lgdp ~ time + time2)
-summary(reg_quad)
-#ou bien trend with breaks 
+ggsave("RAW/urate_1.png", plot = urate_1, width = 8, height = 6)
+#ou bien
+urate_1 <- highchart(type = "stock") %>%
+      hc_add_series(urate[,"rate"], name="Unemployment rate") %>%
+      hc_title(
+        text = "US unemployment rate",
+        margin = 20,
+        align = "left",
+        style = list(color = "#22A884", useHTML = TRUE)  ) %>%
+      hc_rangeSelector(enabled = FALSE) %>%
+      hc_rangeSelector(
+        verticalAlign = "bottom",
+        selected = 4) %>%
+      hc_legend(enabled = TRUE)
 
-# transformation (dif log gdp and idk for unemployment rate)
-lag1 = window(lag(lgdp, k=-1), start=1948, end=2019)
+export_hc(GDP_1, filename = "RAW/urate_1.png", type = "image/png")
+
+###### Transformations (where d stands for 1 differenciation and l for log transformation)
+GDP <- GDP %>% 
+       mutate(lGDP = log(GDP)) %>%
+       mutate(dGDP = diff(GDP)) %>%
+       mutate(dlGDP = diff(lGDP)) %>%
+       mutate(ddGDP = diff(dGDP)) %>%
+       mutate(ddlGDP = diff(dlGDP)) 
+
+urate <- urate %>% 
+       mutate(drate = diff(rate)) %>%
+       mutate(ddrate = diff(drate)) %>%
+
+lGDP <- ggplot(GDP, aes(x = DATE, y = lGDP)) +
+  geom_line() +
+  labs(title = "Log GDP evolution", x = "Date", y = "log GDP")
+ggsave("RAW/lGDP.png", plot = lGDP, width = 8, height = 6)
+
+dGDP <- ggplot(GDP, aes(x = DATE, y = dGDP)) +
+  geom_line() +
+  labs(title = "Economic Growth in the US", x = "Date", y = "Growth")
+ggsave("RAW/dGDP.png", plot = dGDP, width = 8, height = 6)
+
+dlGDP <- ggplot(GDP, aes(x = DATE, y = dlGDP)) +
+  geom_line() +
+  labs(title = "Log of Economic Growth", x = "Date", y = "log growth")
+ggsave("RAW/dlGDP.png", plot = dlGDP, width = 8, height = 6)
+
+ddGDP <- ggplot(GDP, aes(x = DATE, y = ddGDP)) +
+  geom_line() +
+  labs(title = "Two times differenced GDP evolution", x = "Date", y = " Two times differenced GDP")
+ggsave("RAW/ddGDP.png", plot = ddGDP, width = 8, height = 6)
+
+ddlGDP <- ggplot(GDP, aes(x = DATE, y = ddlGDP)) +
+  geom_line() +
+  labs(title = "Log of two times differenced GDP evolution", x = "Date", y = "log of two times differenced GDP")
+ggsave("RAW/ddlGDP.png", plot = ddlGDP, width = 8, height = 6)
+
+
+drate <- ggplot(urate, aes(x = DATE, y = drate)) +
+  geom_line() +
+  labs(title = "First difference of unemployment evolution", x = "Date", y = "unemployment differenciated")
+ggsave("RAW/drate.png", plot = drate, width = 8, height = 6)
+
+ddrate <- ggplot(GDP, aes(x = DATE, y = ddrate)) +
+  geom_line() +
+  labs(title = "Two time differenciated unemployment evolution", x = "Date", y = "unemployment twice differenciated")
+ggsave("RAW/ddrate.png", plot = ddrate, width = 8, height = 6)
 
 
 
 
 
 
-### Unit root and stationarity tests for each time series
 
-# unit root function
+########################################################################################### NOT DONE FROM NOW
+#######################################################
+#Unit root and stationarity tests for each time series#
+#######################################################
+
+###### Unit root function
 #ADF-test
 # With 1 lag ?
 adfTest(lgdp, type="ct", lags=4) # we can't reject H0 (UR)
@@ -117,7 +181,7 @@ summary(ur.kpss(d2lgdp, type="mu", lags="long"))
 # we don't reject H0 (stationarity around a constant), even at 10% --> stationarized TS
 
 
-# stat test (filters)
+###### Stat test (filters)
 lgdp_hp1600 = hpfilter(lgdp, type="lambda", freq=1600)
 plot(lgdp_hp1600) # the cycle component clearly looks like a business cycle
 
@@ -131,14 +195,15 @@ lgdp_cf = cffilter(lgdp, pl=6, pu=32, root=TRUE)
 plot(cbind(lgdp_hp1600$cycle,lgdp_bk$cycle,lgdp_cf$cycle), type="s", col=c("black","blue","red"))
 legend(x=1980, y=-0.03, legend=c("HP filter","BK filter","CF filter"),
        col=c("black","blue","red"), lwd=2)
-# stat test for tranformed function
 
 
 
 
 
+#################################################################
+#Identification of the ARMA or ARIMA process for two time series#
+#################################################################
 
-### Identification of the ARMA or ARIMA process for two time series
 Acf(d_ln_wpi, lag.max=20)
 Pacf(d_ln_wpi, lag.max=40)
 # - For a stationary TS, the autocorrelation function decreases in an exponential manner. 
@@ -185,8 +250,10 @@ arma33$aic # -1550
 
 
 
+#############################################################
+#Forecasts: in-sample and out-of-sample, for two time series#
+#############################################################
 
-### Forecasts: in-sample and out-of-sample, for two time series
 #For a ARMA(3,3)
 arma_s = Arima(gr_gdp_s, order=c(3,0,3))
 # in sample forecast
