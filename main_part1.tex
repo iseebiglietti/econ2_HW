@@ -21,6 +21,7 @@
 \usepackage{dsfont}
 \usepackage{caption}
 \usepackage{cancel}
+\usepackage{hyperref}
 
 \geometry{top=4cm, bottom=4cm, left=4cm, right=4cm}
 \pagestyle{fancy}
@@ -48,18 +49,94 @@
 
 \section{Univariate analysis}
 \subsection{Data presentation: source and plots for each time series}
-U.S. Infra-Annual Labor Statistics: Unemployment Rate Total: From 15 to 64 Years for United States
-Units: Percent, Seasonally Adjusted 
-Frequency: Quarterly
-From: 1970-01-01 // 2024-01-01
-Source: Organization for Economic Co-operation and Development (le lien à ajouter https://www.oecd.org)
-U.S. Gross Domestic Product
-Description: Gross domestic product (GDP), the featured measure of U.S. output, is the market value of the goods and services 
-produced by labor and property located in the United States.
-Units: Billions of Dollars, Seasonally Adjusted Annual Rate
-Frequency: Quarterly
-From: 1970-01-01 // 2024-01-01
-Source: U.S. Bureau of Economic Analysis (le lien à ajouter https://www.bea.gov)
+Our two datasets can be presented by the following information : 
+\begin{itemize}
+    \item U.S. Infra-Annual Labor Statistics
+    \begin{itemize}
+        \item Description: U.S. total unemployment rate, from 15 to 64 years
+        \item Units: Percent, seasonally adjusted
+        \item Frequency: Quarterly
+        \item From: 1970-01-01 // 2024-01-01
+        \item Source: \href{https://www.oecd.org}{Organization for Economic Co-operation and Development}
+    \end{itemize}
+    \item U.S. Gross Domestic Product
+    \begin{itemize}
+        \item Description: Gross domestic product (GDP), the featured measure of U.S. output, is the market value of the goods and services 
+        produced by labor and property located in the United States
+        \item Units: Billions of Dollars, seasonally adjusted annual rate
+        \item Frequency: Quarterly
+        \item From: 1970-01-01 // 2024-01-01
+        \item Source: \href{https://www.bea.gov}{U.S. Bureau of Economic Analysis}
+    \end{itemize}
+\end{itemize}
+
+When plotting our two raw time series, we can say that GDP is clearly upward trending, with a time-varying mean, so not stationary at all 
+(see Figure \ref*{fig:GDP_1}), while unemployment rate has no trend but is persistent, clearly time dependent, but more likely to be stationary
+(see Figure \ref*{fig:urate_1}).\\
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/GDP_1.png}
+    \caption{GDP evolution: raw.}
+    \label{fig:GDP_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/urate_1.png}
+    \caption{Unemployment rate evolution: raw.}
+    \label{fig:urate_1}
+\end{figure}
+
+We take the log of the GDP because of the shape of GDP, to expose its trend more linearly,
+and we take its first and second differenciation, the first and second differenciation of raw GDP, as well as the first and second 
+differenciation for the unemployment rate. \\
+Looking at the plots (see Figures \ref*{fig:lGDP}, \ref*{fig:dlGDP}, \ref*{fig:ddlGDP}, \ref*{fig:dGDP}, \ref*{fig:ddGDP}, \ref*{fig:drate} 
+and \ref*{fig:ddrate}), we will continue on using the raw unemployment rate, the logarithm of GDP and the first difference of the 
+logarithm of GDP to test unit root and stationarity, as they are the more probable to be stationary. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/lGDP.png}
+    \caption{Log GDP evolution}
+    \label{fig:lGDP}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/dlGDP.png}
+    \caption{Economic Growth}
+    \label{fig:dlGDP}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/ddlGDP.png}
+    \caption{Fist differenciation of economic growth}
+    \label{fig:ddlGDP}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/dGDP.png}
+    \caption{Fist differenciation of GDP evolution}
+    \label{fig:dGDP}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/ddGDP.png}
+    \caption{Twicely differetiated GDP}
+    \label{fig:ddGDP}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/drate.png}
+    \caption{Fist differenciation of unemployment rate}
+    \label{fig:drate}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{OUTPUT/ddrate.png}
+    \caption{Twicely differetiated unemployment rate}
+    \label{fig:ddrate}
+\end{figure}
 
 \subsection{Unit root and stationarity tests for each time series}
 

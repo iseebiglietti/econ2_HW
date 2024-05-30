@@ -31,7 +31,7 @@ library(mFilter)
 #Data presentation: source and plots for each time series#
 ##########################################################
 
-GDP <- read.csv2("RAW/GDP.csv", sep = ",") %>%
+GDP <- read.csv2("RAW/GDP.csv", sep = ",")
 urate <- read.csv2("RAW/LRUN64TTUSQ156S.csv", sep = ",")
 
 # change the date format
@@ -59,10 +59,9 @@ urate <- urate %>%
 ###### First plot (Raw plot). What do you see ? 
 
 GDP_1 <- ggplot(GDP, aes(x = DATE, y = GDP)) +
-  geom_line() +
-  labs(title = "GDP evolution", x = "Date", y = "GDP")
+  geom_line()
 
-ggsave("RAW/GDP_1.png", plot = GDP_1, width = 8, height = 6)
+ggsave("OUTPUT/GDP_1.png", plot = GDP_1, width = 8, height = 6)
 #ou bien
 GDP_1 <- highchart(type = "stock") %>%
       hc_add_series(GDP[,"GDP"], name="Value of GDP") %>%
@@ -77,13 +76,12 @@ GDP_1 <- highchart(type = "stock") %>%
         selected = 4) %>%
       hc_legend(enabled = TRUE)
 
-export_hc(GDP_1, filename = "RAW/GDP_1.png", type = "image/png")
+export_hc(GDP_1, filename = "OUTPUT/GDP_1.png")
 
 urate_1 <- ggplot(urate, aes(x = DATE, y = rate)) +
-  geom_line() +
-  labs(title = "Unemployment evolution", x = "Date", y = "Unemployment rate")
+  geom_line()
 
-ggsave("RAW/urate_1.png", plot = urate_1, width = 8, height = 6)
+ggsave("OUTPUT/urate_1.png", plot = urate_1, width = 8, height = 6)
 #ou bien
 urate_1 <- highchart(type = "stock") %>%
       hc_add_series(urate[,"rate"], name="Unemployment rate") %>%
@@ -98,55 +96,47 @@ urate_1 <- highchart(type = "stock") %>%
         selected = 4) %>%
       hc_legend(enabled = TRUE)
 
-export_hc(GDP_1, filename = "RAW/urate_1.png", type = "image/png")
+export_hc(GDP_1, filename = "OUTPUT/urate_1.png")
 
+#####################################################################################    ICI PROBLEMES 
 ###### Transformations (where d stands for 1 differenciation and l for log transformation)
-GDP <- GDP %>% 
-       mutate(lGDP = log(GDP)) %>%
-       mutate(dGDP = diff(GDP)) %>%
-       mutate(dlGDP = diff(lGDP)) %>%
-       mutate(ddGDP = diff(dGDP)) %>%
-       mutate(ddlGDP = diff(dlGDP)) 
+lGDP <- GDP %>% mutate(GDP = log(GDP))
+dGDP <- GDP %>% mutate(GDP = GDP - lag(GDP))
+dlGDP <- GDP %>% mutate(GDP = log(GDP) - lag(log(GDP)))
+ddGDP <- GDP %>% mutate(GDP = GDP - lag(GDP) - lag(GDP - lag(GDP)))
+ddlGDP <- GDP %>% mutate(GDP = log(GDP) - lag(log(GDP)) - lag(log(GDP) - lag(log(GDP))))
 
-urate <- urate %>% 
-       mutate(drate = diff(rate)) %>%
-       mutate(ddrate = diff(drate)) %>%
+drate <- urate %>% mutate(rate = rate - lag(rate))
+ddrate <- urate %>% mutate(rate = rate - lag(rate) - lag(rate - lag(rate)))
 
-lGDP <- ggplot(GDP, aes(x = DATE, y = lGDP)) +
-  geom_line() +
-  labs(title = "Log GDP evolution", x = "Date", y = "log GDP")
-ggsave("RAW/lGDP.png", plot = lGDP, width = 8, height = 6)
+lGDP_plot <- ggplot(lGDP, aes(x = DATE, y = lGDP)) +
+  geom_line()
+ggsave("OUTPUT/lGDP.png", plot = lGDP_plot, width = 8, height = 6)
 
-dGDP <- ggplot(GDP, aes(x = DATE, y = dGDP)) +
-  geom_line() +
-  labs(title = "Economic Growth in the US", x = "Date", y = "Growth")
-ggsave("RAW/dGDP.png", plot = dGDP, width = 8, height = 6)
+dGDP_plot <- ggplot(dGDP, aes(x = DATE, y = dGDP)) +
+  geom_line()
+ggsave("OUTPUT/dGDP.png", plot = dGDP_plot, width = 8, height = 6)
 
-dlGDP <- ggplot(GDP, aes(x = DATE, y = dlGDP)) +
-  geom_line() +
-  labs(title = "Log of Economic Growth", x = "Date", y = "log growth")
-ggsave("RAW/dlGDP.png", plot = dlGDP, width = 8, height = 6)
+dlGDP_plot <- ggplot(dlGDP, aes(x = DATE, y = dlGDP)) +
+  geom_line()
+ggsave("OUTPUT/dlGDP.png", plot = dlGDP_plot, width = 8, height = 6)
 
-ddGDP <- ggplot(GDP, aes(x = DATE, y = ddGDP)) +
-  geom_line() +
-  labs(title = "Two times differenced GDP evolution", x = "Date", y = " Two times differenced GDP")
-ggsave("RAW/ddGDP.png", plot = ddGDP, width = 8, height = 6)
+ddGDP_plot <- ggplot(ddGDP, aes(x = DATE, y = ddGDP)) +
+  geom_line()
+ggsave("OUTPUT/ddGDP.png", plot = ddGDP_plot, width = 8, height = 6)
 
-ddlGDP <- ggplot(GDP, aes(x = DATE, y = ddlGDP)) +
-  geom_line() +
-  labs(title = "Log of two times differenced GDP evolution", x = "Date", y = "log of two times differenced GDP")
-ggsave("RAW/ddlGDP.png", plot = ddlGDP, width = 8, height = 6)
+ddlGDP_plot <- ggplot(ddlGDP, aes(x = DATE, y = ddlGDP)) +
+  geom_line()
+ggsave("OUTPUT/ddlGDP.png", plot = ddlGDP_plot, width = 8, height = 6)
 
 
-drate <- ggplot(urate, aes(x = DATE, y = drate)) +
-  geom_line() +
-  labs(title = "First difference of unemployment evolution", x = "Date", y = "unemployment differenciated")
-ggsave("RAW/drate.png", plot = drate, width = 8, height = 6)
+drate_plot <- ggplot(drate, aes(x = DATE, y = drate)) +
+  geom_line()
+ggsave("OUTPUT/drate.png", plot = drate_plot, width = 8, height = 6)
 
-ddrate <- ggplot(GDP, aes(x = DATE, y = ddrate)) +
-  geom_line() +
-  labs(title = "Two time differenciated unemployment evolution", x = "Date", y = "unemployment twice differenciated")
-ggsave("RAW/ddrate.png", plot = ddrate, width = 8, height = 6)
+ddrate_plot <- ggplot(ddrate, aes(x = DATE, y = ddrate)) +
+  geom_line()
+ggsave("OUTPUT/ddrate.png", plot = ddrate_plot, width = 8, height = 6)
 
 
 
@@ -161,30 +151,30 @@ ggsave("RAW/ddrate.png", plot = ddrate, width = 8, height = 6)
 
 ###### Unit root function
 #IC test to get the number of lags
-VARselect(urate$rate) # ? lags
-VARselect(GDP$lGDP) # ? lags
-VARselect(GDP$dlGDP) # ? lags
+VARselect(urate) # ? lags
+VARselect(lGDP) # ? lags
+VARselect(dlGDP) # ? lags
 
 #ADF-test
-adfTest(urate$rate, type="ct", lags=4)
-adfTest(GDP$lGDP, type="ct", lags=4) # we can't reject H0 (UR)
-adfTest(GDP$dlGDP, type="c", lags=3) # we reject H0 --> stationarized TS
+adfTest(urate, type="ct", lags=4)
+adfTest(lGDP, type="ct", lags=4) # we can't reject H0 (UR)
+adfTest(dlGDP, type="c", lags=3) # we reject H0 --> stationarized TS
 #PP-test
-summary(ur.pp(urate$rate, model="trend", type="Z-tau", use.lag=4))
-summary(ur.pp(GDP$lGDP, model="trend", type="Z-tau", use.lag=4)) # we don't reject H0 (UR)
-summary(ur.pp(GDP$dlGDP, model="constant", type="Z-tau", use.lag=3)) # we reject the UR assumption at 1% --> stationarized TS.
+summary(ur.pp(urate, model="trend", type="Z-tau", use.lag=4))
+summary(ur.pp(lGDP, model="trend", type="Z-tau", use.lag=4)) # we don't reject H0 (UR)
+summary(ur.pp(dlGDP, model="constant", type="Z-tau", use.lag=3)) # we reject the UR assumption at 1% --> stationarized TS.
 #ERS-test (DF-GLS)
-summary(ur.ers(urate$rate, model="trend", type="DF-GLS", lag.max=4))
-summary(ur.ers(GDP$lGDP, model="trend", type="DF-GLS", lag.max=4)) # we don't reject H0 (UR)
-summary(ur.ers(GDP$dlGDP, model="constant", type="DF-GLS", lag.max=3)) # we reject H0 (UR) at 1% --> stationarized TS
+summary(ur.ers(urate, model="trend", type="DF-GLS", lag.max=4))
+summary(ur.ers(lGDP, model="trend", type="DF-GLS", lag.max=4)) # we don't reject H0 (UR)
+summary(ur.ers(dlGDP, model="constant", type="DF-GLS", lag.max=3)) # we reject H0 (UR) at 1% --> stationarized TS
 #KPSS
-summary(ur.kpss(urate$rate, type="mu", lags="long")) # 15 lags
+summary(ur.kpss(urate, type="mu", lags="long")) # 15 lags
 # we reject H0 (stationarity around a constant) at 1%
-summary(ur.kpss(GDP$lGDP, type="tau", lags="long")) # 15 lags
+summary(ur.kpss(lGDP, type="tau", lags="long")) # 15 lags
 # we reject H0 (stationarity around a trend) at 1%
-summary(ur.kpss(GDP$dlGDP, type="mu", lags="long")) # 15 lags
+summary(ur.kpss(dlGDP, type="mu", lags="long")) # 15 lags
 # we reject H0 (stationarity around a constant) at 1%
-summary(ur.kpss(GDP$dlGDP, type="tau", lags="long")) # 15 lags
+summary(ur.kpss(dlGDP, type="tau", lags="long")) # 15 lags
 # we don't reject H0 (stationarity around a trend) even at 10%
 
 #dlGDP is stationary with lGDP isn't ! Take dlGDP and rate from now on !!
@@ -201,10 +191,10 @@ summary(ur.kpss(GDP$dlGDP, type="tau", lags="long")) # 15 lags
 #ACF of an MA(q)=0 after q lags
 #PACF of an AR(p)=0 after p lags
 
-Acf(GDP$dlGDP, lag.max=20) #q = ?
-Pacf(GDP$dlGDP, lag.max=40) #p = ?
-Acf(urate$rate, lag.max=20) #q = ?
-Pacf(urate$rate, lag.max=40) #p = ?
+Acf(dlGDP, lag.max=20) #q = ?
+Pacf(dlGDP, lag.max=40) #p = ?
+Acf(urate, lag.max=20) #q = ?
+Pacf(urate, lag.max=40) #p = ?
 # - For a stationary TS, the autocorrelation function decreases in an exponential manner. 
 # - For a non-stationary TS, the autocorrelation function decreases linearly (and very slowly).
 
@@ -224,20 +214,20 @@ Pacf(urate$rate, lag.max=40) #p = ?
 # ...
 
 #MA, AR, ARMA diagnosis
-dlGDP_ar3 = Arima(GDP$dlGDP, order=c(3,0,0))
+dlGDP_ar3 = Arima(dlGDP, order=c(3,0,0))
 summary(dlGDP_ar3)
-dlGDP_ma3 = Arima(GDP$dlGDP, order=c(0,0,3))
+dlGDP_ma3 = Arima(dlGDP, order=c(0,0,3))
 summary(dlGDP_ma3)
-dlGDP_arma33 = Arima(GDP$dlGDP, order=c(3,0,3))
+dlGDP_arma33 = Arima(dlGDP, order=c(3,0,3))
 summary(dlGDP_arma33)
 plot(cbind(dlGDP_arma33$x,dlGDP_arma33$fitted), plot.type="s", col=c("black","red")) # poor prediction
 1 - sum(dlGDP_arma33$residuals^2)/sum((dlGDP_arma33$x - mean(dlGDP_arma33$x))^2) # R2 ?
 
-rate_ar3 = Arima(urate$rate, order=c(3,0,0))
+rate_ar3 = Arima(urate, order=c(3,0,0))
 summary(rate_ar3)
-rate_ma3 = Arima(urate$rate, order=c(0,0,3))
+rate_ma3 = Arima(urate, order=c(0,0,3))
 summary(rate_ma3)
-rate_arma33 = Arima(urate$rate, order=c(3,0,3))
+rate_arma33 = Arima(urate, order=c(3,0,3))
 summary(rate_arma33)
 plot(cbind(rate_arma33$x,rate_arma33$fitted), plot.type="s", col=c("black","red")) # poor prediction
 1 - sum(rate_arma33$residuals^2)/sum((rate_arma33$x - mean(rate_arma33$x))^2) # R2 ?
@@ -334,49 +324,49 @@ rate_arma33$aic # -1550
 
 #For a ARMA(3,3) (celui que tu choisis en fait)
 # in sample forecast
-plot(cbind(GDP$dlGDP, dlGDP_arma33$fitted), plot.type="s", col=c("black","red")) 
-plot(cbind(urate$rate, rate_arma33$fitted), plot.type="s", col=c("black","red")) 
+plot(cbind(dlGDP, dlGDP_arma33$fitted), plot.type="s", col=c("black","red")) 
+plot(cbind(urate, rate_arma33$fitted), plot.type="s", col=c("black","red")) 
 
 # out-of-sample forecast
-forecast_arma_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_arma33, h=35)
+forecast_arma_dlGDP = forecast(object=dlGDP, model=dlGDP_arma33, h=35)
 forecast_arma_dlGDP
 plot(forecast_arma_dlGDP)
-lines(GDP$dlGDP, col="black") # good forecast, at the good level
+lines(dlGDP, col="black") # good forecast, at the good level
 
-forecast_arma_rate = forecast(object=urate$rate, model=rate_arma33, h=35)
+forecast_arma_rate = forecast(object=urate, model=rate_arma33, h=35)
 forecast_arma_rate
 plot(forecast_arma_rate)
-lines(urate$rate, col="black") # good forecast, at the good level
+lines(urate, col="black") # good forecast, at the good level
 
 #Comparison
 # comparison of all three in-sample forecasts
-plot(cbind(GDP$dlGDP, dlGDP_ar3$fitted,dlGDP_ma3$fitted,dlGDP_arma33$fitted), plot.type="s", 
+plot(cbind(dlGDP, dlGDP_ar3$fitted,dlGDP_ma3$fitted,dlGDP_arma33$fitted), plot.type="s", 
      col=c("black","red","blue","green")) 
 legend(x=1971.01, y=0.06, legend=c("Differentiated Growth","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
        col=c("black","red","blue","green"), lwd=2)
 
-plot(cbind(urate$rate, rate_ar3$fitted,rate_ma3$fitted,rate_arma33$fitted), plot.type="s", 
+plot(cbind(urate, rate_ar3$fitted,rate_ma3$fitted,rate_arma33$fitted), plot.type="s", 
      col=c("black","red","blue","green")) 
 legend(x=1971.01, y=0.06, legend=c("Unemployment Rate","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
        col=c("black","red","blue","green"), lwd=2)
 
 # comparison of all three out-of-sample forecasts
-forecast_ar_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_ar3, h=35)
-forecast_ma_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_ma3, h=35)
-forecast_ar_rate = forecast(object=urate$rate, model=rate_ar3, h=35)
-forecast_ma_rate = forecast(object=urate$rate, model=rate_ma3, h=35)
+forecast_ar_dlGDP = forecast(object=dlGDP, model=dlGDP_ar3, h=35)
+forecast_ma_dlGDP = forecast(object=dlGDP, model=dlGDP_ma3, h=35)
+forecast_ar_rate = forecast(object=urate, model=rate_ar3, h=35)
+forecast_ma_rate = forecast(object=urate, model=rate_ma3, h=35)
 
-f1=ts(c(GDP$dlGDP,forecast_ar_dlGDP$mean), start=1971.01, frequency=4)
-f2=ts(c(GDP$dlGDP,forecast_ma_dlGDP$mean), start=1971.01, frequency=4)
-f3=ts(c(GDP$dlGDP,forecast_arma_dlGDP$mean), start=1971.01, frequency=4)
+f1=ts(c(dlGDP,forecast_ar_dlGDP$mean), start=1971.01, frequency=4)
+f2=ts(c(dlGDP,forecast_ma_dlGDP$mean), start=1971.01, frequency=4)
+f3=ts(c(dlGDP,forecast_arma_dlGDP$mean), start=1971.01, frequency=4)
 plot(cbind(f1, f2, f3), 
      plot.type="s", col=c("red","blue","green"))
 legend(x=1971.01, y=0.06, legend=c("Differentiated Growth","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
        col=c("black","red","blue","green"), lwd=2)
 
-f4=ts(c(urate$rate,forecast_ar_rate$mean), start=1971.01, frequency=4)
-f5=ts(c(urate$rate,forecast_ma_rate$mean), start=1971.01, frequency=4)
-f6=ts(c(urate$rate,forecast_arma_rate$mean), start=1971.01, frequency=4)
+f4=ts(c(urate,forecast_ar_rate$mean), start=1971.01, frequency=4)
+f5=ts(c(urate,forecast_ma_rate$mean), start=1971.01, frequency=4)
+f6=ts(c(urate,forecast_arma_rate$mean), start=1971.01, frequency=4)
 plot(cbind(f4, f5, f6), 
      plot.type="s", col=c("red","blue","green"))
 legend(x=1971.01, y=0.06, legend=c("Unemployment Rate","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
