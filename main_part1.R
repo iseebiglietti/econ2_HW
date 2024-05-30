@@ -150,62 +150,61 @@ ggsave("RAW/ddrate.png", plot = ddrate, width = 8, height = 6)
 
 
 
-# we take urate, lgdp and dlgdp ! :) #
+# we take rate, lGDP and dlGDP ! :) #
 
 
 
-########################################################################################### NOT DONE FROM NOW
+
 #######################################################
 #Unit root and stationarity tests for each time series#
 #######################################################
 
 ###### Unit root function
+#IC test to get the number of lags
+VARselect(urate$rate) # ? lags
+VARselect(GDP$lGDP) # ? lags
+VARselect(GDP$dlGDP) # ? lags
+
 #ADF-test
-# With 1 lag ?
-adfTest(lgdp, type="ct", lags=4) # we can't reject H0 (UR)
-adfTest(dlgdp, type="c", lags=3) # we reject H0 --> stationarized TS
+adfTest(urate$rate, type="ct", lags=4)
+adfTest(GDP$lGDP, type="ct", lags=4) # we can't reject H0 (UR)
+adfTest(GDP$dlGDP, type="c", lags=3) # we reject H0 --> stationarized TS
 #PP-test
-summary(ur.pp(lgdp, model="trend", type="Z-tau", use.lag=4)) # we don't reject H0 (UR)
-summary(ur.pp(dlgdp, model="constant", type="Z-tau", use.lag=3)) # we reject the UR assumption at 1% --> stationarized TS.
+summary(ur.pp(urate$rate, model="trend", type="Z-tau", use.lag=4))
+summary(ur.pp(GDP$lGDP, model="trend", type="Z-tau", use.lag=4)) # we don't reject H0 (UR)
+summary(ur.pp(GDP$dlGDP, model="constant", type="Z-tau", use.lag=3)) # we reject the UR assumption at 1% --> stationarized TS.
 #ERS-test (DF-GLS)
-summary(ur.ers(lgdp, model="trend", type="DF-GLS", lag.max=4)) # we don't reject H0 (UR)
-summary(ur.ers(dlgdp, model="constant", type="DF-GLS", lag.max=3)) # we reject H0 (UR) at 1% --> stationarized TS
+summary(ur.ers(urate$rate, model="trend", type="DF-GLS", lag.max=4))
+summary(ur.ers(GDP$lGDP, model="trend", type="DF-GLS", lag.max=4)) # we don't reject H0 (UR)
+summary(ur.ers(GDP$dlGDP, model="constant", type="DF-GLS", lag.max=3)) # we reject H0 (UR) at 1% --> stationarized TS
 #KPSS
-summary(ur.kpss(lgdp, type="tau", lags="long")) # 15 lags
-# we reject H0 (stationarity around a trend) at 1%
-summary(ur.kpss(dlgdp, type="mu", lags="long")) # 15 lags
+summary(ur.kpss(urate$rate, type="mu", lags="long")) # 15 lags
 # we reject H0 (stationarity around a constant) at 1%
-summary(ur.kpss(dlgdp, type="tau", lags="long")) # 15 lags
+summary(ur.kpss(GDP$lGDP, type="tau", lags="long")) # 15 lags
+# we reject H0 (stationarity around a trend) at 1%
+summary(ur.kpss(GDP$dlGDP, type="mu", lags="long")) # 15 lags
+# we reject H0 (stationarity around a constant) at 1%
+summary(ur.kpss(GDP$dlGDP, type="tau", lags="long")) # 15 lags
 # we don't reject H0 (stationarity around a trend) even at 10%
-summary(ur.kpss(d2lgdp, type="mu", lags="long")) 
-# we don't reject H0 (stationarity around a constant), even at 10% --> stationarized TS
 
-
-###### Stat test (filters)
-lgdp_hp1600 = hpfilter(lgdp, type="lambda", freq=1600)
-plot(lgdp_hp1600) # the cycle component clearly looks like a business cycle
-
-lgdp_bk = bkfilter(lgdp, pl=6, pu=32)
-str(lgdp_bk)
-plot(cbind(lgdp_hp1600$cycle,lgdp_bk$cycle), type="s", col=c("black","blue"))
-legend(x=1980, y=-0.03, legend=c("HP filter","BK filter"),
-       col=c("black","blue"), lwd=2)
-
-lgdp_cf = cffilter(lgdp, pl=6, pu=32, root=TRUE)
-plot(cbind(lgdp_hp1600$cycle,lgdp_bk$cycle,lgdp_cf$cycle), type="s", col=c("black","blue","red"))
-legend(x=1980, y=-0.03, legend=c("HP filter","BK filter","CF filter"),
-       col=c("black","blue","red"), lwd=2)
+#dlGDP is stationary with lGDP isn't ! Take dlGDP and rate from now on !!
 
 
 
 
 
+########################################################################################### NOT DONE FROM NOW
 #################################################################
 #Identification of the ARMA or ARIMA process for two time series#
 #################################################################
 
-Acf(d_ln_wpi, lag.max=20)
-Pacf(d_ln_wpi, lag.max=40)
+#ACF of an MA(q)=0 after q lags
+#PACF of an AR(p)=0 after p lags
+
+Acf(GDP$dlGDP, lag.max=20) #q = ?
+Pacf(GDP$dlGDP, lag.max=40) #p = ?
+Acf(urate$rate, lag.max=20) #q = ?
+Pacf(urate$rate, lag.max=40) #p = ?
 # - For a stationary TS, the autocorrelation function decreases in an exponential manner. 
 # - For a non-stationary TS, the autocorrelation function decreases linearly (and very slowly).
 
@@ -223,62 +222,163 @@ Pacf(d_ln_wpi, lag.max=40)
 #       --> Many possible ICs: AIC, BIC, HQ, ...
 #       Better with BIC or HQ.
 # ...
-#ARMA diagnosis
-arma33 = Arima(gr_gdp_s, order=c(3,0,3))
-plot(cbind(arma33$x,arma33$fitted), plot.type="s", col=c("black","red")) # poor prediction
-1 - sum(arma33$residuals^2)/sum((arma33$x - mean(arma33$x))^2) # R2 0.16
-#WN residuals?
-tsdiag(arma33, gof.lag=40) # very clearly, yes
-# p value is very high for every h! So yeah, eps are residuals
+
+#MA, AR, ARMA diagnosis
+dlGDP_ar3 = Arima(GDP$dlGDP, order=c(3,0,0))
+summary(dlGDP_ar3)
+dlGDP_ma3 = Arima(GDP$dlGDP, order=c(0,0,3))
+summary(dlGDP_ma3)
+dlGDP_arma33 = Arima(GDP$dlGDP, order=c(3,0,3))
+summary(dlGDP_arma33)
+plot(cbind(dlGDP_arma33$x,dlGDP_arma33$fitted), plot.type="s", col=c("black","red")) # poor prediction
+1 - sum(dlGDP_arma33$residuals^2)/sum((dlGDP_arma33$x - mean(dlGDP_arma33$x))^2) # R2 ?
+
+rate_ar3 = Arima(urate$rate, order=c(3,0,0))
+summary(rate_ar3)
+rate_ma3 = Arima(urate$rate, order=c(0,0,3))
+summary(rate_ma3)
+rate_arma33 = Arima(urate$rate, order=c(3,0,3))
+summary(rate_arma33)
+plot(cbind(rate_arma33$x,rate_arma33$fitted), plot.type="s", col=c("black","red")) # poor prediction
+1 - sum(rate_arma33$residuals^2)/sum((rate_arma33$x - mean(rate_arma33$x))^2) # R2 ?
+
+#WN residuals? (autocorrelation tests)
+Box.test(dlGDP_ar3$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(dlGDP_ar3, gof.lag = 40) # True for all lag selection
+Box.test(dlGDP_ma3$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(dlGDP_ma3, gof.lag = 40) # True for all lag selection
+Box.test(dlGDP_arma33$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(dlGDP_arma33, gof.lag=40) # very clearly, yes
+# p value is very high for every h! So yeah, epsilons are residuals
+
+Box.test(rate_ar3$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(rate_ar3, gof.lag = 40) # True for all lag selection
+Box.test(rate_ma3$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(rate_ma3, gof.lag = 40) # True for all lag selection
+Box.test(rate_arma33$residuals,lag = 30, type = "Ljung-Box") # No AC
+tsdiag(rate_arma33, gof.lag=40) # very clearly, yes
+# p value is very high for every h! So yeah, epsilons are residuals
+
 #Normally distributed residuals?
-hist(arma33$residuals, breaks=20) 
-qqnorm(arma33$residuals); qqline(arma33$residuals)
-shapiro.test(arma33$residuals)
-ks.test(arma33$residuals, rnorm)
-jarque.bera.test(arma33$residuals)
+hist(dlGDP_ar3$residuals, breaks=20) 
+qqnorm(dlGDP_ar3$residuals); qqline(dlGDP_ar3$residuals)
+shapiro.test(dlGDP_ar3$residuals)
+ks.test(dlGDP_ar3$residuals, rnorm)
+jarque.bera.test(dlGDP_ar3$residuals)
+
+hist(dlGDP_ma3$residuals, breaks=20) 
+qqnorm(dlGDP_ma3$residuals); qqline(dlGDP_ma3$residuals)
+shapiro.test(dlGDP_ma3$residuals)
+ks.test(dlGDP_ma3$residuals, rnorm)
+jarque.bera.test(dlGDP_ma3$residuals)
+
+hist(dlGDP_arma33$residuals, breaks=20) 
+qqnorm(dlGDP_arma33$residuals); qqline(dlGDP_arma33$residuals)
+shapiro.test(dlGDP_arma33$residuals)
+ks.test(dlGDP_arma33$residuals, rnorm)
+jarque.bera.test(dlGDP_arma33$residuals)
+
+
+hist(rate_ar3$residuals, breaks=20) 
+qqnorm(rate_ar3$residuals); qqline(rate_ar3$residuals)
+shapiro.test(rate_ar3$residuals)
+ks.test(rate_ar3$residuals, rnorm)
+jarque.bera.test(rate_ar3$residuals)
+
+hist(rate_ma3$residuals, breaks=20) 
+qqnorm(rate_ma3$residuals); qqline(rate_ma3$residuals)
+shapiro.test(rate_ma3$residuals)
+ks.test(rate_ma3$residuals, rnorm)
+jarque.bera.test(rate_ma3$residuals)
+
+hist(rate_arma3$residuals, breaks=20) 
+qqnorm(rate_arma3$residuals); qqline(rate_arma3$residuals)
+shapiro.test(rate_arma3$residuals)
+ks.test(rate_arma3$residuals, rnorm)
+jarque.bera.test(rate_arma3$residuals)
+
 # Bayesian Information Criterion / Schwarz IC = k*ln(n) - 2*ln(L)
-ar3$bic # -1529.589
-ma3$bic # -1524.86
-arma33$bic # -1522.604
+dlGDP_ar3$bic # -1529.589
+dlGDP_ma3$bic # -1524.86
+dlGDP_arma33$bic # -1522.604
 #minimize the criterion --> AR
+rate_ar3$bic # -1529.589
+rate_ma3$bic # -1524.86
+rate_arma33$bic # -1522.604
+#minimize the criterion --> AR
+
 # Akaike Information Criterion = 2*k - 2*ln(L) (to be modified for small sample)
-ar3$aic # -1546
-ma3$aic # -1542
-arma33$aic # -1550
+dlGDP_ar3$aic # -1546
+dlGDP_ma3$aic # -1542
+dlGDP_arma33$aic # -1550
+#minimize the criterion --> ARMA
+rate_ar3$aic # -1546
+rate_ma3$aic # -1542
+rate_arma33$aic # -1550
+#minimize the criterion --> ARMA
 
+# This implies that we should choose the AR(1), as it has the minimum BIC
+# and the ARMA(1,1) is not SS at the MA component. Finally, all three models
+# have no serial correlation and non normal errors.
 
-
+# We could choose the MA(3) or the AR(2), as they both have a similar BIC and the
+# same properties. However, I will use the former because it has a slightly lower
+# BIC, a slightly better chance of having normal errors, a lower AIC and is the 
+# result of the process of taking out unsignificant coefficients from the 
+# ARMA(2,3).
 
 
 #############################################################
 #Forecasts: in-sample and out-of-sample, for two time series#
 #############################################################
 
-#For a ARMA(3,3)
-arma_s = Arima(gr_gdp_s, order=c(3,0,3))
+#For a ARMA(3,3) (celui que tu choisis en fait)
 # in sample forecast
-plot(cbind(gr_gdp_s, arma_s$fitted), plot.type="s", col=c("black","red")) 
-legend(x=1980, y=0.06, legend=c("QoQ rate","In-sample forecast ARMA(3,3)"),
-       col=c("black","red"), lwd=2)
+plot(cbind(GDP$dlGDP, dlGDP_arma33$fitted), plot.type="s", col=c("black","red")) 
+plot(cbind(urate$rate, rate_arma33$fitted), plot.type="s", col=c("black","red")) 
+
 # out-of-sample forecast
-forecast_arma_oos = forecast(object=gr_gdp_s, model=arma_s, h=35)
-forecast_arma_oos
-plot(forecast_arma_oos)
-lines(gr_gdp, col="black") # good forecast, at the good level
+forecast_arma_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_arma33, h=35)
+forecast_arma_dlGDP
+plot(forecast_arma_dlGDP)
+lines(GDP$dlGDP, col="black") # good forecast, at the good level
+
+forecast_arma_rate = forecast(object=urate$rate, model=rate_arma33, h=35)
+forecast_arma_rate
+plot(forecast_arma_rate)
+lines(urate$rate, col="black") # good forecast, at the good level
+
 #Comparison
 # comparison of all three in-sample forecasts
-plot(cbind(gr_gdp_s, ar3_s$fitted,ma3_s$fitted,arma_s$fitted), plot.type="s", 
+plot(cbind(GDP$dlGDP, dlGDP_ar3$fitted,dlGDP_ma3$fitted,dlGDP_arma33$fitted), plot.type="s", 
      col=c("black","red","blue","green")) 
-legend(x=1990, y=0.06, legend=c("QoQ rate","IS Forecast AR(3)","IS Forecast MA(3)","IS Forecast ARMA(3,3)"),
-       col=c("black","red","blue","green"), lwd=2)
-# comparison of all three out-of-sample forecasts
-f1=ts(c(gr_gdp_s,forecast_hl_s$mean), start=1949.25, frequency=4)
-f2=ts(c(gr_gdp_s,forecast_ma_oos$mean), start=1949.25, frequency=4)
-f3=ts(c(gr_gdp_s,forecast_arma_oos$mean), start=1949.25, frequency=4)
-plot(cbind(f1, f2, f3), 
-     plot.type="s", col=c("red","blue","green"))
-lines(gr_gdp, col="black")
-legend(x=1990, y=0.06, legend=c("QoQ rate","OOS Forecast AR(3)","OOS Forecast MA(3)","OOS Forecast ARMA(3,3)"),
+legend(x=1971.01, y=0.06, legend=c("Differentiated Growth","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
        col=c("black","red","blue","green"), lwd=2)
 
+plot(cbind(urate$rate, rate_ar3$fitted,rate_ma3$fitted,rate_arma33$fitted), plot.type="s", 
+     col=c("black","red","blue","green")) 
+legend(x=1971.01, y=0.06, legend=c("Unemployment Rate","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
+       col=c("black","red","blue","green"), lwd=2)
+
+# comparison of all three out-of-sample forecasts
+forecast_ar_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_ar3, h=35)
+forecast_ma_dlGDP = forecast(object=GDP$dlGDP, model=dlGDP_ma3, h=35)
+forecast_ar_rate = forecast(object=urate$rate, model=rate_ar3, h=35)
+forecast_ma_rate = forecast(object=urate$rate, model=rate_ma3, h=35)
+
+f1=ts(c(GDP$dlGDP,forecast_ar_dlGDP$mean), start=1971.01, frequency=4)
+f2=ts(c(GDP$dlGDP,forecast_ma_dlGDP$mean), start=1971.01, frequency=4)
+f3=ts(c(GDP$dlGDP,forecast_arma_dlGDP$mean), start=1971.01, frequency=4)
+plot(cbind(f1, f2, f3), 
+     plot.type="s", col=c("red","blue","green"))
+legend(x=1971.01, y=0.06, legend=c("Differentiated Growth","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
+       col=c("black","red","blue","green"), lwd=2)
+
+f4=ts(c(urate$rate,forecast_ar_rate$mean), start=1971.01, frequency=4)
+f5=ts(c(urate$rate,forecast_ma_rate$mean), start=1971.01, frequency=4)
+f6=ts(c(urate$rate,forecast_arma_rate$mean), start=1971.01, frequency=4)
+plot(cbind(f4, f5, f6), 
+     plot.type="s", col=c("red","blue","green"))
+legend(x=1971.01, y=0.06, legend=c("Unemployment Rate","Forecast AR(3)","Forecast MA(3)","Forecast ARMA(3,3)"),
+       col=c("black","red","blue","green"), lwd=2)
 
